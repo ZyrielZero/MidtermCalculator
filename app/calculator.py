@@ -15,6 +15,7 @@ from app import history as history_io
 from app.calculation import Calculation
 from app.calculator_config import CalculatorConfig
 from app.calculator_memento import CalculatorMemento
+from app.help_menu import build_help
 from app.exceptions import CalculatorError, HistoryError, ValidationError
 from app.history import AutoSaveObserver, HistoryObserver, LoggingObserver
 from app.input_validators import InputValidator
@@ -130,20 +131,8 @@ class Calculator:
 
 
 def help_text() -> str:
-    """Static command listing for the help command.
-
-    Hand-maintained for now; a later branch will generate this from
-    the operation registry so new operations appear automatically.
-    """
-    lines = [
-        "Operations (usage: <name> <a> <b>):",
-        "  add, subtract, multiply, divide, power, root,",
-        "  modulus, int_divide, percent, abs_diff",
-        "Other commands:",
-    ]
-    for name, blurb in UTILITY_COMMANDS.items():
-        lines.append(f"  {name:<12}{blurb}")
-    return "\n".join(lines)
+    """Help text assembled by the decorator-built menu."""
+    return build_help(UTILITY_COMMANDS)
 
 
 def handle_command(calculator: Calculator, line: str) -> tuple[bool, str]:
