@@ -97,3 +97,18 @@ def test_available_lists_all_ten_operations():
     assert len(names) == 10
     assert names == sorted(names)
     assert "abs_diff" in names and "power" in names
+    
+def test_operation_str_is_its_name():
+    assert str(OperationFactory.create("modulus")) == "modulus"
+
+
+def test_root_with_vanishing_degree_overflows_cleanly():
+    op = OperationFactory.create("root")
+    with pytest.raises(OperationError):
+        op.execute(D("2"), D("1e-30"))
+
+
+def test_root_of_zero_with_negative_degree_is_rejected():
+    op = OperationFactory.create("root")
+    with pytest.raises(OperationError):
+        op.execute(D("0"), D("-1"))
