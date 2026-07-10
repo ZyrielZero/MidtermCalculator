@@ -16,6 +16,7 @@ from app.calculation import Calculation
 from app.calculator_config import CalculatorConfig
 from app.calculator_memento import CalculatorMemento
 from app.help_menu import build_help
+from app.display import style_banner, style_output
 from app.exceptions import CalculatorError, HistoryError, ValidationError
 from app.history import AutoSaveObserver, HistoryObserver, LoggingObserver
 from app.input_validators import InputValidator
@@ -194,7 +195,7 @@ def run_repl() -> None:  # pragma: no cover
     calculator.add_observer(LoggingObserver())
     calculator.add_observer(AutoSaveObserver())
 
-    print("Advanced Calculator. Type help for commands.")
+    print(style_banner("Advanced Calculator. Type help for commands."))
     while True:
         try:
             line = input("calc> ")
@@ -203,7 +204,7 @@ def run_repl() -> None:  # pragma: no cover
             break
         keep_running, output = handle_command(calculator, line)
         if output:
-            print(output)
+            print(style_output(output))
         if not keep_running:
             break
 
