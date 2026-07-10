@@ -15,9 +15,9 @@ from app import history as history_io
 from app.calculation import Calculation
 from app.calculator_config import CalculatorConfig
 from app.calculator_memento import CalculatorMemento
-from app.help_menu import build_help
+from app.commands import build_registry
 from app.display import style_banner, style_output
-from app.exceptions import CalculatorError, HistoryError, ValidationError
+from app.exceptions import CalculatorError, HistoryError, OperationError
 from app.history import AutoSaveObserver, HistoryObserver, LoggingObserver
 from app.input_validators import InputValidator
 from app.logger import configure_logging, get_logger
@@ -131,13 +131,22 @@ class Calculator:
 # -- REPL ------------------------------------------------------------------
 
 
-def help_text() -> str:
-    """Help text assembled by the decorator-built menu."""
-    return build_help(UTILITY_COMMANDS)
+_COMMAND_REGISTRY: dict | None = None
+
+
+def _registry() -> dict:
+    """Build the command registry once, on first use."""
+    global _COMMAND_REGISTRY
+    if _COMMAND_REGISTRY is None:
+        _COMMAND_REGISTRY = build_registry(
+            [op.name for op in OperationFactory.available()],
+            UTILITY_COMMANDS,
+        )
+    return _COMMAND_REGISTRY
 
 
 def handle_command(calculator: Calculator, line: str) -> tuple[bool, str]:
-    """Process one REPL line.
+    """Process one REPL line through the command registry.
 
     Returns:
         A (keep_running, output) pair. keep_running is False only for
@@ -146,42 +155,15 @@ def handle_command(calculator: Calculator, line: str) -> tuple[bool, str]:
     tokens = line.strip().split()
     if not tokens:
         return True, ""
-    command, args = tokens[0].lower(), tokens[1:]
+    verb, args = tokens[0].lower(), tokens[1:]
 
     try:
-        if command == "exit":
-            return False, "Goodbye."
-        if command == "help":
-            return True, help_text()
-        if command == "history":
-            if not calculator.history:
-                return True, "History is empty."
-            rows = [
-                f"{i}. {calc}" for i, calc in enumerate(calculator.history, 1)
-            ]
-            return True, "\n".join(rows)
-        if command == "clear":
-            calculator.clear_history()
-            return True, "History cleared."
-        if command == "undo":
-            calculator.undo()
-            return True, "Undid the last calculation."
-        if command == "redo":
-            calculator.redo()
-            return True, "Redid the last undone calculation."
-        if command == "save":
-            calculator.save_history()
-            return True, f"History saved to {calculator.config.history_file}."
-        if command == "load":
-            calculator.load_history()
-            return True, f"Loaded {len(calculator.history)} calculations."
-
-        if len(args) != 2:
-            raise ValidationError(
-                f"Usage: {command} <a> <b> with exactly two operands."
+        command = _registry().get(verb)
+        if command is None:
+            raise OperationError(
+                f"Unknown operation {verb!r}; run help for the full list."
             )
-        calculation = calculator.perform(command, args[0], args[1])
-        return True, str(calculation)
+        return command.keeps_running, command.execute(calculator, args)
     except CalculatorError as exc:
         get_logger().warning("command %r failed: %s", line.strip(), exc)
         return True, f"Error: {exc}"

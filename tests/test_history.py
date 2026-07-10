@@ -103,3 +103,17 @@ def test_auto_save_observer_stays_quiet_when_disabled(tmp_path):
 def test_observer_base_class_is_abstract():
     with pytest.raises(TypeError):
         HistoryObserver()
+        
+        
+def test_save_translates_os_failures(tmp_path):
+    blocker = tmp_path / "blocker"
+    blocker.write_text("a file, not a directory")
+    with pytest.raises(HistoryError):
+        save_history([], blocker / "hist.csv", "utf-8")
+
+
+def test_load_translates_unparseable_files(tmp_path):
+    target = tmp_path / "hollow.csv"
+    target.write_text("")
+    with pytest.raises(HistoryError):
+        load_history(target, "utf-8")

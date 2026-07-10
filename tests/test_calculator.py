@@ -188,3 +188,11 @@ def test_failures_come_back_as_error_lines(calculator, line, fragment):
     assert keep is True
     assert out.startswith("Error:")
     assert fragment in out
+    
+
+def test_round_falls_back_when_result_exceeds_context(calculator):
+    # 1e6 ** 5 = 1e30; quantizing that to 10 decimal places would need
+    # more digits than the Decimal context allows, so _round returns
+    # the raw value instead of raising.
+    calc = calculator.perform("power", "1000000", "5")
+    assert calc.result == Decimal("1e30")
