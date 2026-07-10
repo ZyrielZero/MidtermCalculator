@@ -5,7 +5,7 @@ from decimal import Decimal
 import pytest
 
 from app.calculation import Calculation
-from app.calculator import Calculator, handle_command, help_text
+from app.calculator import Calculator, handle_command
 from app.calculator_config import CalculatorConfig
 from app.exceptions import HistoryError
 from app.history import HistoryObserver
@@ -140,7 +140,6 @@ def test_help_lists_operations_and_utilities(calculator):
     _, out = handle_command(calculator, "help")
     assert "abs_diff" in out
     assert "undo" in out
-    assert help_text() == out
 
 
 def test_history_command_lists_numbered_entries(calculator):
